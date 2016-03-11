@@ -1,0 +1,9 @@
+V1={
+type="voltage source",
+V=100
+}
+
+R1={
+type="resistance"
+R=10
+}
