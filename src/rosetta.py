@@ -16,44 +16,93 @@ import componenti
 
 # Posizione assoluta del progetto
 # In pratica, la cartella sopra di quella di questo script
-path_base=os.path.dirname( os.path.realpath( __file__ ) ) + '/../'
+path_base = os.path.dirname( os.path.realpath( __file__ ) ) + '/../'
+
+# lista_totale_poli = 
 
 class Componente:
     '''
     Classe che rappresenta un componente nel circuito, ad esempio una resistenza o un op-amp.
     Contiene il nome, un dict con i parametri
     '''
+    matcircuito = [[]]
     # Ad es "R1"
     nome = ''
-    tipo=''
+    tipo = ''
     # Ad es {'V'=10, 'R'=2.3e10}. Letti da Test1.circuitoconf
     parametri = {}
     # Coordinate della prima lettera del nome di variabile
     coordinate = ( -1, -1 )
-    # dict dei contatti uscenti del componente, identificati da minuscole, e a dove sono connessi
-    # Es {'m': [ R1.contatti_polipoli['b'], C1.poli['a'] ], 'p': [ G.poli['a'] ], 'o': [ C1.poli['b'], V0.poli['a'] ]}
+    # dict dei contatti uscenti del componente, identificati da minuscole, dove sono e dove sono connessi
+    # Un adjacency list tecnicamente, credo
+    # Es {'m': (xm,ym, [ R1.contatti_poli['b'], C1.contatti_poli['a'] ]), 
+    #     'p': (xp,yp, [ G.contatti_poli['a'] ]), 
+    #     'o': (xo,yo, [ C1.contatti_poli['b'], V0.contatti_poli['a'] ])}
     contatti_poli = {}
-    def __init__( self, nome, tipo, coordinate, contatti_poli={} ):
+    def __init__( self, matcircuito, nome, tipo, coordinate, contatti_poli={} ):
+        self.matcircuito = matcircuito
         self.nome = nome
         self.coordinate = coordinate
         self.contatti_poli = contatti_poli
     
-    #Funzione che rende questa classe  hashabile (usabile come indice in un dict ad esempio)
-    def __hash__(self):
+    # Funzione che rende questa classe  hashabile (usabile come indice in un dict ad esempio)
+    def __hash__( self ):
         # Qui repr ritorna una stringa rappresentante questo oggetto in modo "unico" (approfondire...)
         # e quindi generiamo un hash da questa stringa
-        return hash(repr(self))
+        return hash( repr( self ) )
     
-    def trova_poli_componente( self ):
+    def trova_poli_componente( self, variabili_nel_grafo ):
         '''
-        Metodo che riempe la lista 'poli' del componente e controlla che corrispondano al suo tipo
+        Metodo che riempe la lista 'contatti_poli' del componente e controlla che corrispondano al suo tipo
         come definito in componenti.py
         '''
-        
+        for comp in variabili_nel_grafo:
+            pos_comp_x = comp[0][0]
+            pos_comp_y = comp[0][1]
+            '''
+            Cerca prima e dopo il nome di variabile. Ricordiamo che 
+            (pos_comp_x, pos_comp_y) è la posizione della prima lettera del nome della variabile,
+            ad esempio qua è la 'O' di OPAMP
+            
+            a)    b)
+            #     #
+            #OPAMP#
+            #     #
+            '''
+            # TODO: trovare modo pythonico di sommare un numero a ciascun elemento di una lista
+            # a): Prima del nome
+            for yp in ( pos_comp_y - 1, pos_comp_y + 0, pos_comp_y + 1 ):
+                
+                #           a)              b)
+                for xp in ( pos_comp_x - 1, pos_comp_x + len( self.nome ) + 1 ):
+                    # Se la cella in (xp,yp) contiene una lettera minuscola...
+                    if matcircuito[xp][yp] in string.ascii_lowercase:
+                        # Usa la lettera come etichetta del polo e associaci le coordinate
+                        label_polo = matcircuito[xp][yp]
+                        # Dopo riempiremo la lista dei contatti...
+                        self.contatti_poli[label_polo] = ( xp, yp, [] )
+                
+            '''
+            Cerca "sopra" e "sotto" la variabile
+             #####
+             OPAMP
+             #####
+            '''
+            for yp in ( pos_comp_y - 1, pos_comp_y + 1 ):
+
+                # C'è un "+1" in più perché range(a,b) "matematicamente", 
+                # con la notazione di intervallo dell'analisi, è [a,b)
+                for xp in range( pos_comp_x, pos_comp_x + len( self.nome ) + 2 ):
+                    if matcircuito[xp][yp] in string.ascii_lowercase:
+                        # 
+                        label_polo = matcircuito[xp][yp]
+                        # Dopo riempiremo la lista dei contatti...
+                        self.contatti_poli[label_polo] = ( xp, yp, [] )
+                    
 def parseAsciiGraphFile( nome_circuito ):
     # Leggi tutto il file in una stringa
-    with open( path_base+'circuiti/' + nome_circuito + '/' + 
-               nome_circuito + '.rosettagraph', 'r' ) as f:
+    with open( path_base + 'circuiti/' + nome_circuito + '/' + 
+               nome_circuito + '.circuitograph', 'r' ) as f:
         read_data = f.read()
         
     # TODO Ma davvero servira' farle di lunghezza invariata? Vediamo a codice finito
@@ -102,7 +151,7 @@ def scan_variable_name( matcircuito, i, j ):
 
 # "Main"
 # Il primo argomento è #
-# Prendi l'array bidimensionale quadrato che rappresenta i componenti
+# Prendi l'array bidimensionale rettangolare che rappresenta i componenti
 matcircuito = parseAsciiGraphFile( sys.argv[1] )
 
 # TODO Per il debug
@@ -143,7 +192,7 @@ while ( i < len( matcircuito ) ):
 """
 # Adesso cerchiamo i nodi associati alle variabili (variabile = componente)
 
-test={
+test = {
     'a': 
       1,
         'b': 2
@@ -152,6 +201,8 @@ test={
 print( str( variabili_nel_grafo ) )
 print( os.path.dirname( os.path.realpath( __file__ ) ) )
 print( 2.3e3 )
-print(test)
+print( test )
+print( componenti.lista_tipi_componenti )
 
-
+for i in range( -1, 1 ):
+    print( i )
