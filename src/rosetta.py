@@ -18,6 +18,66 @@ import componenti
 # In pratica, la cartella sopra di quella di questo script
 path_base = os.path.dirname( os.path.realpath( __file__ ) ) + '/../'
 
+def parseAsciiGraphFile( nome_circuito ):
+    # Leggi tutto il file in una stringa
+    with open( path_base + 'circuiti/' + nome_circuito + '/' + 
+               nome_circuito + '.circuitograph', 'r' ) as f:
+        read_data = f.read()
+        
+    # TODO Ma davvero servira' farle di lunghezza invariata? Vediamo a codice finito
+    # Dobbiamo farle di lunghezza uguale, paddiamole a destra con spazi secondo quella piu' lunga
+    # Splitlines le divide in righe e toglie l'a capo
+    raw_lines = read_data.splitlines()
+    # Max ritorna la stringa piu' lunga, secondo la funzione len appunto. Quindi richiamiamo
+    # len(...) sulla stringa piu' lunga per salvare la sua lunghezza in lunghezza_massima
+    # Credo che  max(raw_lines,key=len) e  max(raw_lines, len) siano ecquivalenti?
+    lunghezza_massima = len( max( raw_lines, key=len ) )
+    
+    # for riga in raw_lines:
+    #  # ljust aggiunge spazi bianchi alla stringa finche' non e' della lunghezza indicata, altrimenti
+    #   # se e' uguale (o maggiore, ma non dovrebbe essere il caso qua...) la lascia invariata
+    #    riga=riga.ljust(lunghezza_massima,'#')
+    # Esempio di list comprehension
+    formatted_lines = [riga.ljust( lunghezza_massima ) for riga in raw_lines]
+    
+    return formatted_lines
+
+
+
+
+# Il primo argomento è sys.argv[1]
+# Prendi l'array bidimensionale rettangolare che rappresenta i componenti
+matcircuito = parseAsciiGraphFile( sys.argv[1] )
+
+
+
+
+# Ritorna la stinga vuota se alla posizione i,j di matcircuito non c'è una maiuscola (e quindi un nome
+# di variabile) altrimenti ritorna ((x,y),"NOME_VARIABILE") dove x,y è la coordinata della prima lettera
+def scan_variable_name( i, j ):
+    d = collections.deque()
+    if matcircuito[i][j] not in string.ascii_uppercase:
+        return ( ( -1, -1 ), "" )
+    else:
+        # O qua o col k dopo, si deve includere la lettera [i][j+0] in cui "atterriamo"
+        k_prec = 0
+        while ( j + k_prec >= 0 and ( matcircuito[i][j + k_prec] in string.ascii_uppercase + string.digits ) ):
+            d.appendleft( matcircuito[i][j + k_prec] )
+            print( ( i, j + k_prec ), '=', matcircuito[i][j + k_prec] )
+            k_prec = k_prec - 1
+        
+
+        # Qui quindi dobbiamo partire da 1
+        k = 1
+        while ( j + k < len( matcircuito[i] ) and ( matcircuito[i][j + k] in string.ascii_uppercase + string.digits ) ):
+            d.append( matcircuito[i][j + k] )
+            print( ( i, j + k ), '=', matcircuito[i][j + k] )
+            k = k + 1
+        
+        # k_prec+1 perché l'ultimo tentativo di ricerca all'indietro di maisucole è fallito
+        print( 'variabile in ', ( i, j + k_prec + 1 ), '=', ''.join( d ) )
+        return ( ( i, j + k_prec + 1 ) , ''.join( d ) )
+ 
 # lista_totale_poli = 
 
 class Componente:
@@ -98,63 +158,10 @@ class Componente:
                         label_polo = matcircuito[xp][yp]
                         # Dopo riempiremo la lista dei contatti...
                         self.contatti_poli[label_polo] = ( xp, yp, [] )
-                    
-def parseAsciiGraphFile( nome_circuito ):
-    # Leggi tutto il file in una stringa
-    with open( path_base + 'circuiti/' + nome_circuito + '/' + 
-               nome_circuito + '.circuitograph', 'r' ) as f:
-        read_data = f.read()
-        
-    # TODO Ma davvero servira' farle di lunghezza invariata? Vediamo a codice finito
-    # Dobbiamo farle di lunghezza uguale, paddiamole a destra con spazi secondo quella piu' lunga
-    # Splitlines le divide in righe e toglie l'a capo
-    raw_lines = read_data.splitlines()
-    # Max ritorna la stringa piu' lunga, secondo la funzione len appunto. Quindi richiamiamo
-    # len(...) sulla stringa piu' lunga per salvare la sua lunghezza in lunghezza_massima
-    # Credo che  max(raw_lines,key=len) e  max(raw_lines, len) siano ecquivalenti?
-    lunghezza_massima = len( max( raw_lines, key=len ) )
-    
-    # for riga in raw_lines:
-    #  # ljust aggiunge spazi bianchi alla stringa finche' non e' della lunghezza indicata, altrimenti
-    #   # se e' uguale (o maggiore, ma non dovrebbe essere il caso qua...) la lascia invariata
-    #    riga=riga.ljust(lunghezza_massima,'#')
-    # Esempio di list comprehension
-    formatted_lines = [riga.ljust( lunghezza_massima ) for riga in raw_lines]
-    
-    return formatted_lines
-
-# Ritorna la stinga vuota se alla posizione i,j di matcircuito non c'è una maiuscola (e quindi un nome
-# di variabile) altrimenti ritorna ((x,y),"NOME_VARIABILE") dove x,y è la coordinata della prima lettera
-def scan_variable_name( matcircuito, i, j ):
-    d = collections.deque()
-    if matcircuito[i][j] not in string.ascii_uppercase:
-        return ( ( -1, -1 ), "" )
-    else:
-        # O qua o col k dopo, si deve includere la lettera [i][j+0] in cui "atterriamo"
-        k_prec = 0
-        while ( j + k_prec >= 0 and ( matcircuito[i][j + k_prec] in string.ascii_uppercase + string.digits ) ):
-            d.appendleft( matcircuito[i][j + k_prec] )
-            print( ( i, j + k_prec ), '=', matcircuito[i][j + k_prec] )
-            k_prec = k_prec - 1
-        
-        # Qui quindi dobbiamo partire da 1
-        k = 1
-        while ( j + k < len( matcircuito[i] ) and ( matcircuito[i][j + k] in string.ascii_uppercase + string.digits ) ):
-            d.append( matcircuito[i][j + k] )
-            print( ( i, j + k ), '=', matcircuito[i][j + k] )
-            k = k + 1
-        
-        # k_prec+1 perché l'ultimo tentativo di ricerca all'indietro di maisucole è fallito
-        print( 'variabile in ', ( i, j + k_prec + 1 ), '=', ''.join( d ) )
-        return ( ( i, j + k_prec + 1 ) , ''.join( d ) )
-    
-
+                        
 # "Main"
-# Il primo argomento è #
-# Prendi l'array bidimensionale rettangolare che rappresenta i componenti
-matcircuito = parseAsciiGraphFile( sys.argv[1] )
 
-# TODO Per il debug
+# TODO: Per il debug
 for i in range( 1, len( matcircuito ) ):
     print( matcircuito[i] )
 
