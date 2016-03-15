@@ -158,7 +158,15 @@ class Componente:
                         label_polo = matcircuito[xp][yp]
                         # Dopo riempiremo la lista dei contatti...
                         self.contatti_poli[label_polo] = ( xp, yp, [] )
-                        
+            
+    
+    
+    
+    def trova_connessioni(self,variabili_nel_grafo):
+        
+    
+   
+
 # "Main"
 
 # TODO: Per il debug
