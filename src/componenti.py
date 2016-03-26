@@ -1,18 +1,20 @@
 # Elenco dei possibili componenti e loro poli e parametri
-# 'nome': (( lista_parametri ), numero_poli, OPZIONALE (lista_nomi_poli) )
+# 'nome': dict( lista_parametri=(...), numero_poli=..., lista_nomi_poli=(...) )
 # Se è bipolare e simmetrico non serve mettere la lista nomi poli
 # Neanche i monopoli hanno bisogno di sapere il nome dell'(unica) uscita
 
 
-
+# Ricordarsi gli apici!
+# a = dict( k=i )
+# Si accede a i con a['k'] ovviamente, non con a[k]
 lista_tipi_componenti = {
-'monopole': ((),1,()),
-'voltage_source': ( ( 'V' ), 2, ('m','p')  ),
-'resistor': ( ( 'R' ), 2 ),
-'capacitor': ( ( 'C' ), 2 ),
-'inductance': ( ( 'L' ), 2 ),
-'op_amp': ( (), 3, () ),
+'monopole': dict( lista_parametri=(), numero_poli=1, lista_nomi_poli=() ),
+'voltage_source': dict( lista_parametri=( 'V' ), numero_poli=2, ( 'm', 'p' ) ),
+'resistor': dict( lista_parametri=( 'R' ), numero_poli=2 ),
+'capacitor': dict( lista_parametri=( 'C' ), numero_poli=2 ),
+'inductance': dict( lista_parametri=( 'L' ), numero_poli=2 ),
+'op_amp': dict( lista_parametri=(), numero_poli=3, lista_nomi_poli=( 'm', 'p', 'o' ) ),
 
 # m=minus, p=plus, o=output
-'op_amp_reale': ( ( 'gain', 'Rinput', 'Routput' ), 3, ('m','p','o') )
+'op_amp_reale': dict( ( 'gain', 'Rinput', 'Routput' ), 3, ( 'm', 'p', 'o' ) )
 }
