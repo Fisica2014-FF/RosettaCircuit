@@ -42,7 +42,7 @@ def parseAsciiGraphFile( nome_circuito ):
     # Esempio di list comprehension
     # Nota, aggiungo uno spazio bianco ovunque attorno al circuito, per evitare di diver scrivere troppe
     # condizioni sulle dimensioni degli array quando sono vicino ai bordi
-    formatted_lines = [' ' * ( lunghezza_massima + 2)]
+    formatted_lines = [' ' * ( lunghezza_massima + 2 )]
     formatted_lines = formatted_lines + [' ' + riga.ljust( lunghezza_massima + 1 , ' ' ) for riga in raw_lines] + [' ' * ( lunghezza_massima + 2 )]
     
     return formatted_lines
@@ -74,7 +74,7 @@ def scan_variable_name( i, j ):
         k_prec = 0
         while ( j + k_prec >= 0 and ( matcircuito[i][j + k_prec] in string.ascii_uppercase + string.digits ) ):
             d.appendleft( matcircuito[i][j + k_prec] )
-            #print( ( i, j + k_prec ), '=', matcircuito[i][j + k_prec] )
+            # print( ( i, j + k_prec ), '=', matcircuito[i][j + k_prec] )
             k_prec = k_prec - 1
         
 
@@ -82,41 +82,45 @@ def scan_variable_name( i, j ):
         k = 1
         while ( j + k < len( matcircuito[i] ) and ( matcircuito[i][j + k] in string.ascii_uppercase + string.digits ) ):
             d.append( matcircuito[i][j + k] )
-            #print( ( i, j + k ), '=', matcircuito[i][j + k] )
+            # print( ( i, j + k ), '=', matcircuito[i][j + k] )
             k = k + 1
         
         # k_prec+1 perché l'ultimo tentativo di ricerca all'indietro di maisucole è fallito
-        #print( 'variabile in ', ( i, j + k_prec + 1 ), '=', ''.join( d ) )
+        # print( 'variabile in ', ( i, j + k_prec + 1 ), '=', ''.join( d ) )
         return ( ( i, j + k_prec + 1 ) , ''.join( d ) )
 
 
 
-
-# Riempi l'array con le variabili nel grafo
-variabili_nel_grafo = set( {} )
-i = 0
-while ( i < len( matcircuito ) ):
-    # In teoria sono tutti uguali, ma se cambio dopo...
-    j = 0
-    while ( j < len( matcircuito[i] ) ):
-        # c = matcircuito[i][j]
-        # print((i,j))
-        # print(len(matcircuito))
-        # print(scan_variable_name(matcircuito,i,j))
-        # print(scan_variable_name(matcircuito,i,j)[0])
-        # print(scan_variable_name(matcircuito,i,j)[1])
+def crea_lista_variabili_grafo():
+    '''
+    Riempi l'array con le variabili nel grafo
+    '''
+    variabili_nel_grafo = set( {} )
+    i = 0
+    while ( i < len( matcircuito ) ):
+        # In teoria sono tutti uguali, ma se cambio dopo...
+        j = 0
+        while ( j < len( matcircuito[i] ) ):
+            # c = matcircuito[i][j]
+            # print((i,j))
+            # print(len(matcircuito))
+            # print(scan_variable_name(matcircuito,i,j))
+            # print(scan_variable_name(matcircuito,i,j)[0])
+            # print(scan_variable_name(matcircuito,i,j)[1])
+            
+            nome_pos_variabile = scan_variable_name( i, j )
+            if ( nome_pos_variabile[1] != '' ):
+                variabili_nel_grafo.add( nome_pos_variabile )
+                # Se abbiamo trovato la variabile, salta alla fine della variabile corrente, data dalla 
+                # posizione della prima lettera più la lunghezza della variabile (ricordiamo che 
+                # nome_pos_variabile ha la forma ((x,y),"NOME_VARIABILE") ) con x e coordinate della prima lettera 
+                j = nome_pos_variabile[0][1] + len( nome_pos_variabile[1] ) + 1
+                continue
+            # Altrimenti passa al prossimo carattere
+            j = j + 1
+        i = i + 1
         
-        nome_pos_variabile = scan_variable_name( i, j )
-        if ( nome_pos_variabile[1] != '' ):
-            variabili_nel_grafo.add( nome_pos_variabile )
-            # Se abbiamo trovato la variabile, salta alla fine della variabile corrente, data dalla 
-            # posizione della prima lettera più la lunghezza della variabile (ricordiamo che 
-            # nome_pos_variabile ha la forma ((x,y),"NOME_VARIABILE") ) con x e coordinate della prima lettera 
-            j = nome_pos_variabile[0][1] + len( nome_pos_variabile[1] ) + 1
-            continue
-        # Altrimenti passa al prossimo carattere
-        j = j + 1
-    i = i + 1
+        return variabili_nel_grafo
 
 
 
@@ -194,7 +198,7 @@ class Componente:
     coordinate = ( -1, -1 )
     # dict dei contatti uscenti del componente, identificati da minuscole, dove sono e dove sono connessi
     # Un adjacency list tecnicamente, credo
-    # Es {'m': (xm,ym, [ R1.contatti_poli['b'], C1.contatti_poli['a'] ]), 
+    # Es {'m': (xm,ym, [ variabili_nel_grafo['R1'].contatti_poli['b'], variabili_nel_grafo['C1'].contatti_poli['a'] ]), 
     #     'p': (xp,yp, [ G.contatti_poli['a'] ]), 
     #     'o': (xo,yo, [ C1.contatti_poli['b'], V0.contatti_poli['a'] ])}
     contatti_poli = {}
@@ -209,7 +213,7 @@ class Componente:
         # e quindi generiamo un hash da questa stringa
         return hash( repr( self ) )
     
-    def trova_poli_componente( self ):
+    def trova_poli_componente( self , variabili_nel_grafo ):
         '''
         Metodo che riempe la lista 'contatti_poli' del componente e controlla che corrispondano al suo tipo
         come definito in componenti.py
@@ -264,37 +268,115 @@ class Componente:
 
 
 
+
     # Da chiamare dopo che trova_poli_componente è stata chiamata su ogni componente
     def trova_connessioni( self ):
+        '''
+        Trova a cosa è connesso ciascun polo di questo Component, seguendo i fili
+        '''
         for nome_polo in self.contatti_poli.keys():
             px = self.contatti_poli[nome_polo][0]
             py = self.contatti_poli[nome_polo][1]
             
-            for ( x_polo_intorno, y_polo_intorno ) in intorno_cella_orizz( px, py ):
-                if matcircuito[x_polo_intorno][y_polo_intorno] == '-':
-                    i = 1
-                    while matcircuito[x_polo_intorno + i][y_polo_intorno] == '-':
-                        i = i + 1
-                    
-                    
-                    # Una volta usciti dal while
-                    # TODO: Cerchiamo poli di altre componenti, oppure un nome di variabile, oppure un più
-                    # Occhio a qualche caso limite...
-                    x_finecavo = x_polo_intorno + i
-                    y_finecavo = y_polo_intorno
-                    if (matcircuito[x_finecavo][y_finecavo] in string.ascii_lowercase):
-                        for ( x_fc_intorno, y_fc_intorno ) in intorno_cella_pieno( x_finecavo , y_finecavo ):
-                            #TODO:
-                            pass
+            
+            '''
+            Unifichiamo il codice per i fili orizzontali e verticali
+            '''
+            intorno_cella_corretto = dict( verticale=intorno_cella_vert,
+                                    orizzontale=intorno_cella_orizz )
+            char_filo = dict( verticale='|', orizzontale='-' )
+            
+            # d come direzione
+            for d in ('orizzontale','verticale'):
+                for ( x_polo_intorno, y_polo_intorno ) in intorno_cella_corretto[d]:
+                    if matcircuito[x_polo_intorno][y_polo_intorno] in char_filo[d]:
+                        
+                        if (d == 'orizzontale'):
                             
+                            # "Seguiamo" il filo, cioè controlliamo fin dove ci sono caratteri validi
+                            i = 1
+                            while matcircuito[x_polo_intorno + i][y_polo_intorno] in char_filo[d] + '^<>':
+                                i = i + 1
+                            
+                            x_finefilo = x_polo_intorno + i
+                            y_finefilo = y_polo_intorno
+                            
+                            '''
+                            Una volta usciti dal while, matcircuito[x_polo_intorno + i][y_polo_intorno] non è
+                            un pezzo di filo valido
+                            TODO: Cerchiamo poli di altre componenti, oppure un nome di variabile, oppure un più
+                            Occhio a qualche caso limite...
+                        
+                            
+                                    ?_ff_intorno
+                                         v v
+                                     |  |
+                            G-mV1p---^-->-pX1m-G2
+                                     |  |
+                                ^ ^
+                            ?_polo_intorno
+                            
+                            in questo caso
+                            V1 = self
+                            X1 = variabile_polo_arrivo
+                            
+                            '''
+                            
+                        else:
+                            # d='verticale'
+                            i = 1
+                            while matcircuito[x_polo_intorno][y_polo_intorno + i] in char_filo[d] + '^<>':
+                                i = i + 1
+                            
+                            x_finefilo = x_polo_intorno
+                            y_finefilo = y_polo_intorno + i
+                        
+                        if ( matcircuito[x_finefilo][y_finefilo] in string.ascii_lowercase ):
+                            variabile_polo_arrivo = (-1,-1,'')
+                            
+                            for ( x_ff_intorno, y_ff_intorno ) in intorno_cella_pieno( x_finefilo , y_finefilo ):
+                                if ( variabile_polo_arrivo != (-1,-1,'') ):
+                                    variabile_polo_arrivo = scan_variable_name( x_ff_intorno, y_ff_intorno )
+                                    
+                                    # TODO: aggiungere il nome del polo di arrivo in self.contatti_poli[2][nome_polo]
+                                    # Ricordiamo che nome_polo è il polo di partenza, attacato a self
+                                    self.contatti_poli[2][nome_polo].append( variabili_nel_grafo[variabile_polo_arrivo] )
+                                    
+                                else:
+                                    raise ValueError( "Polo associato a più variabili! X" + 
+                                                     str( x_ff_intorno ) + " Y" + str( y_ff_intorno ) )
+                                    
+                                    pass
+                                
+                
+                # Cerca e segui i fili
             
-            # Cerca e segui i fili
             
-# "Main"
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+'''
+"MAIN"
+'''
+
+variabili_nel_grafo = crea_lista_variabili_grafo()
+
 
 # TODO: Per il debug
 for i in range( 0, len( matcircuito ) ):
     print( matcircuito[i] )
+
+
 
 
 """ 
@@ -306,11 +388,6 @@ for i in range( 0, len( matcircuito ) ):
 """
 # Adesso cerchiamo i nodi associati alle variabili (variabile = componente)
 
-test = {
-    'a': 
-      1,
-        'b': 2
-}
 '''
 print( str( variabili_nel_grafo ) )
 print( os.path.dirname( os.path.realpath( __file__ ) ) )
