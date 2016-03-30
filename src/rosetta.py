@@ -12,12 +12,30 @@ import sys
 import collections
 import os
 import string
+import importlib
+import imp
 import componenti
+
 
 # Posizione assoluta del progetto
 # In pratica, la cartella sopra di quella di questo script
-path_base = os.path.dirname( os.path.realpath( __file__ ) ) + '/../'
+#path_base = os.path.dirname( os.path.realpath( __file__ ) ) + '/../'
 
+# Rimuovi src/
+path_base = os.path.dirname( os.path.realpath( __file__ ) )[0:-4] + '/'
+
+# ad es, 'Test1'
+nome_circuito = sys.argv[1]
+path_circuito = path_base + 'circuiti/' + nome_circuito + '/'
+file_conf = path_circuito + nome_circuito + '.py'
+print(path_base)
+print(nome_circuito)
+print(path_circuito)
+print(file_conf)
+
+# Importa il file di configurazioni del circuito
+# componenti = imp.load_source('componenti' , path_base + 'src/componenti.py')
+circuito_conf = imp.load_source(nome_circuito , file_conf)
 
 
 def parseAsciiGraphFile( nome_circuito ):
@@ -63,11 +81,11 @@ matcircuito = parseAsciiGraphFile( sys.argv[1] )
 
 # Ritorna la stinga vuota se alla posizione i,j di matcircuito non c'è una maiuscola (e quindi un nome
 # di variabile) altrimenti ritorna ((x,y),"NOME_VARIABILE") dove x,y è la coordinata della prima lettera
-def scan_variable_name( i, j ):
+def scan_variable_name( i, j , matcircuito):
     d = collections.deque()
     if matcircuito[i][j] == '+':
         return ( ( i, j ), '_CROSS' + 'X' + str( i ) + 'Y' + str( j ) )
-    elif matcircuito[i][j] not in string.ascii_uppercase:
+    if matcircuito[i][j] not in string.ascii_uppercase:
         return ( ( -1, -1 ), '' )
     else:
         # O qua o col k dopo, si deve includere la lettera [i][j+0] in cui "atterriamo"
@@ -91,7 +109,7 @@ def scan_variable_name( i, j ):
 
 
 
-def crea_lista_variabili_grafo():
+def crea_lista_variabili_grafo(matcircuito):
     '''
     Riempi l'array con le variabili nel grafo
     '''
@@ -101,14 +119,14 @@ def crea_lista_variabili_grafo():
         # In teoria sono tutti uguali, ma se cambio dopo...
         j = 0
         while ( j < len( matcircuito[i] ) ):
-            # c = matcircuito[i][j]
-            # print((i,j))
-            # print(len(matcircuito))
-            # print(scan_variable_name(matcircuito,i,j))
-            # print(scan_variable_name(matcircuito,i,j)[0])
-            # print(scan_variable_name(matcircuito,i,j)[1])
+            #c = matcircuito[i][j]
+            #print(c,(i,j))
+            #print(len(matcircuito[i]))
+            #print(scan_variable_name(i,j,matcircuito))
+            #print(scan_variable_name(i,j,matcircuito)[0])
+            #print(scan_variable_name(i,j,matcircuito)[1])
             
-            nome_pos_variabile = scan_variable_name( i, j )
+            nome_pos_variabile = scan_variable_name( i, j , matcircuito)
             if ( nome_pos_variabile[1] != '' ):
                 variabili_nel_grafo.add( nome_pos_variabile )
                 # Se abbiamo trovato la variabile, salta alla fine della variabile corrente, data dalla 
@@ -120,7 +138,7 @@ def crea_lista_variabili_grafo():
             j = j + 1
         i = i + 1
         
-        return variabili_nel_grafo
+    return variabili_nel_grafo
 
 
 
@@ -135,9 +153,9 @@ Ritorna una lista delle coordinate intorno al punto, inclusi i punti in diagonal
 '''
 def intorno_cella_pieno( p_x, p_y ):
     
-    intorno_cella = ( ( p_x - 1, p_y + 1 ), ( p_x + 0, p_y + 1 ), ( p_x + 1, p_y + 1 ),
+    intorno_cella = ( ( p_x - 1, p_y - 1 ), ( p_x + 0, p_y - 1 ), ( p_x + 1, p_y - 1 ),
                       ( p_x - 1, p_y + 0 ), ( p_x + 1, p_y + 0 ),
-                      ( p_x - 1, p_y - 1 ), ( p_x + 0, p_y - 1 ), ( p_x + 1, p_y - 1 ) )
+                      ( p_x - 1, p_y + 1 ), ( p_x + 0, p_y + 1 ), ( p_x + 1, p_y + 1 ) )
     
     return intorno_cella
 
@@ -149,9 +167,9 @@ Ritorna una lista delle coordinate intorno al punto, a forma di +
 '''
 def intorno_cella_piu( p_x, p_y ):
     
-    intorno_cella = ( ( p_x + 0, p_y + 1 ),
+    intorno_cella = ( ( p_x + 0, p_y - 1 ),
                       ( p_x - 1, p_y + 0 ), ( p_x + 1, p_y + 0 ),
-                                            ( p_x + 0, p_y - 1 ) )
+                                            ( p_x + 0, p_y + 1 ) )
     
     return intorno_cella
 
@@ -177,13 +195,14 @@ Ritorna una lista delle coordinate intorno al punto, a forma di +
 '''
 def intorno_cella_vert( p_x, p_y ):
     
-    intorno_cella = ( ( p_x + 0, p_y + 1 ),
+    intorno_cella = ( ( p_x + 0, p_y - 1 ),
                       
-                                            ( p_x + 0, p_y - 1 ) )
+                                            ( p_x + 0, p_y + 1 ) )
     
     return intorno_cella
 
 
+# Unifica la descrizione geoetrica di variabile in uun grafo con quella fisica (i vari parametri)
 class Componente:
     '''
     Classe che rappresenta un componente nel circuito, ad esempio una resistenza o un op-amp.
@@ -202,11 +221,24 @@ class Componente:
     #     'p': (xp,yp, [ G.contatti_poli['a'] ]), 
     #     'o': (xo,yo, [ C1.contatti_poli['b'], V0.contatti_poli['a'] ])}
     contatti_poli = {}
-    def __init__( self, nome, tipo, coordinate, contatti_poli={} ):
+    def __init__( self, nome, coordinate, contatti_poli={} ):
+        # TODO: Leggere da circuito_conf.parametri_componenti i parametri dei componenti
+        # TODO: controllare validità della lista (dict) dei parametri con quella dichiarata 
+        # in componenti.lista_tipi_componenti per quel tipo
         self.nome = nome
         self.coordinate = coordinate
         self.contatti_poli = contatti_poli
-    
+        
+        # Leggi e setta i parametri, togliendo quello con chiave 'type' già usato per il tipo
+        # Dovrebbe dare KeyError se nome non è nella lista
+        dict_param = circuito_conf.parametri_componenti[nome]
+        self.tipo = dict_param['type']
+        
+        # http://stackoverflow.com/questions/15411107/delete-a-dictionary-item-if-the-key-exists
+        # Togli la chiave (e l'elemento associato a) 'type'
+        nomi_parametri = dict_param.pop('type',None)
+        self.parametri = nomi_parametri
+        
     # Funzione che rende questa classe  hashabile (usabile come indice in un dict ad esempio)
     def __hash__( self ):
         # Qui repr ritorna una stringa rappresentante questo oggetto in modo "unico" (approfondire...)
@@ -281,72 +313,105 @@ class Componente:
             
             '''
             Unifichiamo il codice per i fili orizzontali e verticali
+            
+            Dei  vari modi per farlo, questo mi è sembrato il più chiaro, anche se
+            un po' prolisso.
             '''
-            intorno_cella_corretto = dict( verticale=intorno_cella_vert,
-                                    orizzontale=intorno_cella_orizz )
-            char_filo = dict( verticale='|', orizzontale='-' )
+            direzione_cella = dict( su=( px, py - 1 ),
+                                    giu=( px, py + 1 ),
+                                    dx=( px + 1, py ),
+                                    sx=( py - 1, py ) )
+            char_filo = dict( su='|', giu='|', dx='-', sx='-' )
             
             # d come direzione
-            for d in ('orizzontale','verticale'):
-                for ( x_polo_intorno, y_polo_intorno ) in intorno_cella_corretto[d]:
-                    if matcircuito[x_polo_intorno][y_polo_intorno] in char_filo[d]:
+            
+            for d in ( 'su', 'giu', 'dx', 'sx' ):
+                
+                # for ( x_polo_intorno, y_polo_intorno ) in intorno_cella_corretto[d]:
+                ( x_polo_intorno, y_polo_intorno ) = direzione_cella[d]
+                
+                if matcircuito[x_polo_intorno][y_polo_intorno] in char_filo[d]:
+                    
+                    if ( d == 'dx' ):
                         
-                        if (d == 'orizzontale'):
-                            
-                            # "Seguiamo" il filo, cioè controlliamo fin dove ci sono caratteri validi
-                            i = 1
-                            while matcircuito[x_polo_intorno + i][y_polo_intorno] in char_filo[d] + '^<>':
-                                i = i + 1
-                            
-                            x_finefilo = x_polo_intorno + i
-                            y_finefilo = y_polo_intorno
-                            
-                            '''
-                            Una volta usciti dal while, matcircuito[x_polo_intorno + i][y_polo_intorno] non è
-                            un pezzo di filo valido
-                            TODO: Cerchiamo poli di altre componenti, oppure un nome di variabile, oppure un più
-                            Occhio a qualche caso limite...
+                        # -->
+                        # "Seguiamo" il filo, cioè controlliamo fin dove ci sono caratteri validi
+                        i = 1
+                        while matcircuito[x_polo_intorno + i][y_polo_intorno] in char_filo[d] + '^<>':
+                            i = i + 1
                         
-                            
-                                    ?_ff_intorno
-                                         v v
-                                     |  |
-                            G-mV1p---^-->-pX1m-G2
-                                     |  |
-                                ^ ^
-                            ?_polo_intorno
-                            
-                            in questo caso
-                            V1 = self
-                            X1 = variabile_polo_arrivo
-                            
-                            '''
-                            
-                        else:
-                            # d='verticale'
-                            i = 1
-                            while matcircuito[x_polo_intorno][y_polo_intorno + i] in char_filo[d] + '^<>':
-                                i = i + 1
-                            
-                            x_finefilo = x_polo_intorno
-                            y_finefilo = y_polo_intorno + i
+                        x_finefilo = x_polo_intorno + i
+                        y_finefilo = y_polo_intorno
                         
-                        if ( matcircuito[x_finefilo][y_finefilo] in string.ascii_lowercase ):
-                            variabile_polo_arrivo = (-1,-1,'')
-                            
-                            for ( x_ff_intorno, y_ff_intorno ) in intorno_cella_pieno( x_finefilo , y_finefilo ):
-                                if ( variabile_polo_arrivo != (-1,-1,'') ):
-                                    variabile_polo_arrivo = scan_variable_name( x_ff_intorno, y_ff_intorno )
-                                    
-                                    # TODO: aggiungere il nome del polo di arrivo in self.contatti_poli[2][nome_polo]
-                                    # Ricordiamo che nome_polo è il polo di partenza, attacato a self
-                                    self.contatti_poli[2][nome_polo].append( variabili_nel_grafo[variabile_polo_arrivo] )
-                                    
-                                else:
-                                    raise ValueError( "Polo associato a più variabili! X" + 
-                                                     str( x_ff_intorno ) + " Y" + str( y_ff_intorno ) )
-                                    
-                                    pass
+                    elif ( d == 'sx' ):
+                        # <--
+                        i = -1
+                        while matcircuito[x_polo_intorno + i][y_polo_intorno] in char_filo[d] + '^<>':
+                            i = i - 1
+                        x_finefilo = x_polo_intorno + i
+                        y_finefilo = y_polo_intorno
+
+                    elif ( d == 'su' ):
+                        # ^
+                        # |
+                        i = -1
+                        while matcircuito[x_polo_intorno][y_polo_intorno + i] in char_filo[d] + '^<>':
+                            i = i - 1
+                        x_finefilo = x_polo_intorno
+                        y_finefilo = y_polo_intorno + i
+
+                    elif ( d == 'giu' ):
+                        # |
+                        # v
+                        i = 1
+                        while matcircuito[x_polo_intorno][y_polo_intorno + i] in char_filo[d] + '^<>':
+                            i = i + 1
+                        x_finefilo = x_polo_intorno
+                        y_finefilo = y_polo_intorno + i
+                    
+                    
+                    
+                    '''
+                    Una volta usciti dal while, matcircuito[x_polo_intorno + i][y_polo_intorno] non è
+                    un pezzo di filo valido
+                    TODO: Cerchiamo poli di altre componenti, oppure un nome di variabile, oppure un più
+                    Occhio a qualche caso limite...
+                
+                    Ad esempio, se stiamo seguendo il filo che dal polo p di V1 va al polo p di X1,
+                    abbiamo che:    
+                    
+                            ?_ff_intorno
+                                 v v
+                             |  |
+                    G-mV1p---^-->-pX1m-G2
+                             |  |
+                        ^ ^
+                    ?_polo_intorno
+                    
+                    in questo caso
+                    V1 = self
+                    X1 = variabile_polo_arrivo
+                    
+                    '''
+                    
+                    # Controlliamo dove siamo arrivati. See è un polo...
+                    if ( matcircuito[x_finefilo][y_finefilo] in string.ascii_lowercase ):
+                        variabile_polo_arrivo = ( (-1, -1), '' )
+                        
+                        # ... cercca la variabile (componente) a cui appartiene
+                        for ( x_ff_intorno, y_ff_intorno ) in intorno_cella_pieno( x_finefilo , y_finefilo ):
+                            if ( variabile_polo_arrivo != ( (-1, -1), '' ) ):
+                                variabile_polo_arrivo = scan_variable_name( x_ff_intorno, y_ff_intorno )
+                                
+                                # TODO: aggiungere il nome del polo di arrivo in self.contatti_poli[2][nome_polo]
+                                # Ricordiamo che nome_polo è il polo di partenza, attacato a self
+                                self.contatti_poli[1][nome_polo].append( variabili_nel_grafo[variabile_polo_arrivo] )
+                                
+                            else:
+                                raise ValueError( "Polo associato a più variabili! X" + 
+                                                 str( x_ff_intorno ) + " Y" + str( y_ff_intorno ) )
+                                
+                                pass
                                 
                 
                 # Cerca e segui i fili
@@ -368,9 +433,23 @@ class Componente:
 '''
 "MAIN"
 '''
+# TODO:Potremmo separarare l'inizializzazione (parseAsciiGraphFile, la creazione delle variabili globali) 
+# in un altro file..) in un altro
 
-variabili_nel_grafo = crea_lista_variabili_grafo()
+variabili_nel_grafo = crea_lista_variabili_grafo(matcircuito)
 
+# TODO: fare una lista/dict componenti_grafo di Component con chiave il loro nome
+componenti_grafo = Set( {} )
+for var in variabili_nel_grafo:
+    posx = var[0][0]
+    posy = var[0][1]
+    nome = var[1]
+
+    componenti_grafo.add(Componente()
+
+print( variabili_nel_grafo  )
+print( componenti.lista_tipi_componenti )
+print( circuito_conf.parametri_componenti )
 
 # TODO: Per il debug
 for i in range( 0, len( matcircuito ) ):
