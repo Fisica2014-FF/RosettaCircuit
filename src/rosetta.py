@@ -2,6 +2,8 @@
 #  The string at the top of the script is called the documentation string. 
 # It documents the current script. Accessibile attraverso __doc__?
 # Altra variabile speciale, __file__, la posizione di questo file
+from componenti import lista_tipi_componenti
+from operator import xor
 
 '''
 Created on 09 mar 2016
@@ -15,11 +17,13 @@ import string
 import importlib
 import imp
 import componenti
+import pprint as pp
+
 
 
 # Posizione assoluta del progetto
 # In pratica, la cartella sopra di quella di questo script
-#path_base = os.path.dirname( os.path.realpath( __file__ ) ) + '/../'
+# path_base = os.path.dirname( os.path.realpath( __file__ ) ) + '/../'
 
 # Rimuovi src/
 path_base = os.path.dirname( os.path.realpath( __file__ ) )[0:-4] + '/'
@@ -28,14 +32,77 @@ path_base = os.path.dirname( os.path.realpath( __file__ ) )[0:-4] + '/'
 nome_circuito = sys.argv[1]
 path_circuito = path_base + 'circuiti/' + nome_circuito + '/'
 file_conf = path_circuito + nome_circuito + '.py'
-print(path_base)
-print(nome_circuito)
-print(path_circuito)
-print(file_conf)
+print( path_base )
+print( nome_circuito )
+print( path_circuito )
+print( file_conf )
 
 # Importa il file di configurazioni del circuito
 # componenti = imp.load_source('componenti' , path_base + 'src/componenti.py')
-circuito_conf = imp.load_source(nome_circuito , file_conf)
+circuito_conf = imp.load_source( nome_circuito , file_conf )
+
+# TODO: Classe 
+class Circuito:
+    __formatted_lines__ = []
+    def at(self,x,y):
+        return self.__formatted_lines__[y][x]
+    
+    def num_righe(self):
+        return len(self.__formatted_lines__)
+    
+    def num_colonne(self):
+        len(self.__formatted_lines__)
+        
+    def __init__(self, nome_circuito):
+            # Leggi tutto il file in una stringa
+        with open( path_base + 'circuiti/' + nome_circuito + '/' + 
+                   nome_circuito + '.circuitograph', 'r' ) as f:
+            read_data = f.read()
+            
+        # TODO Ma davvero servira' farle di lunghezza invariata? Vediamo a codice finito
+        # Dobbiamo farle di lunghezza uguale, paddiamole a destra con spazi secondo quella piu' lunga
+        # Splitlines le divide in righe e toglie l'a capo
+        raw_lines = read_data.splitlines()
+        # Max ritorna la stringa piu' lunga, secondo la funzione len appunto. Quindi richiamiamo
+        # len(...) sulla stringa piu' lunga per salvare la sua lunghezza in lunghezza_massima
+        # Credo che  max(raw_lines,key=len) e  max(raw_lines, len) siano ecquivalenti?
+        lunghezza_massima = len( max( raw_lines, key=len ) )
+        
+        # for riga in raw_lines:
+        #  # ljust aggiunge spazi bianchi alla stringa finche' non e' della lunghezza indicata, altrimenti
+        #   # se e' uguale (o maggiore, ma non dovrebbe essere il caso qua...) la lascia invariata
+        #    riga=riga.ljust(lunghezza_massima,'#')
+        # Esempio di list comprehension
+        # Nota, aggiungo uno spazio bianco ovunque attorno al circuito, per evitare di diver scrivere troppe
+        # condizioni sulle dimensioni degli array quando sono vicino ai bordi
+        formatted_lines = [' ' * ( lunghezza_massima + 2 )]
+        formatted_lines = formatted_lines + [' ' + riga.ljust( lunghezza_massima + 1 , ' ' ) for riga in raw_lines] + [' ' * ( lunghezza_massima + 2 )]
+        
+        ''' 
+        TODO: Adesso devo affettare la matrice per "lungo" e non per "largo", ie
+        a b c
+        d e f
+        g h i
+        da
+        ((a,b,c),(d,e,f),(g,h,i))
+        a
+        ((a,d,g),(b,e,h),(c,f,i))
+        cioè
+        a d g
+        b e h
+        c f i
+        (transposition)
+        So we use the built-in zip on the matrix
+        
+        * is the splat operator
+        list(...) because in python3 zip is an iterator and we want to reuse it
+        '''
+        
+        # formatted_lines = list(zip(*formatted_lines))
+        # self.formatted_lines = formatted_lines
+        
+
+        
 
 
 def parseAsciiGraphFile( nome_circuito ):
@@ -63,6 +130,29 @@ def parseAsciiGraphFile( nome_circuito ):
     formatted_lines = [' ' * ( lunghezza_massima + 2 )]
     formatted_lines = formatted_lines + [' ' + riga.ljust( lunghezza_massima + 1 , ' ' ) for riga in raw_lines] + [' ' * ( lunghezza_massima + 2 )]
     
+    ''' 
+    TODO: Adesso devo affettare la matrice per "lungo" e non per "largo", ie
+    a b c
+    d e f
+    g h i
+    da
+    ((a,b,c),(d,e,f),(g,h,i))
+    a
+    ((a,d,g),(b,e,h),(c,f,i))
+    cioè
+    a d g
+    b e h
+    c f i
+    (tansposition)
+    So we use the built-in zip on the matrix
+    
+    * is the splat operator
+    list(...) because in python3 zip is an iterator and we want to reuse it
+    '''
+    
+    formatted_lines = list(zip(*formatted_lines))
+    pp.pprint(formatted_lines)
+    
     return formatted_lines
 
 
@@ -72,8 +162,8 @@ def parseAsciiGraphFile( nome_circuito ):
 
 # Il primo argomento è sys.argv[1]
 # Prendi l'array bidimensionale rettangolare che rappresenta i componenti
-matcircuito = parseAsciiGraphFile( sys.argv[1] )
-
+# matcircuito = parseAsciiGraphFile( sys.argv[1] )
+matcircuito = Circuito(sys.argv[1])
 
 
 
@@ -81,7 +171,7 @@ matcircuito = parseAsciiGraphFile( sys.argv[1] )
 
 # Ritorna la stinga vuota se alla posizione i,j di matcircuito non c'è una maiuscola (e quindi un nome
 # di variabile) altrimenti ritorna ((x,y),"NOME_VARIABILE") dove x,y è la coordinata della prima lettera
-def scan_variable_name( i, j , matcircuito):
+def scan_variable_name( i, j , matcircuito ):
     d = collections.deque()
     if matcircuito[i][j] == '+':
         return ( ( i, j ), '_CROSS' + 'X' + str( i ) + 'Y' + str( j ) )
@@ -109,7 +199,7 @@ def scan_variable_name( i, j , matcircuito):
 
 
 
-def crea_lista_variabili_grafo(matcircuito):
+def crea_lista_variabili_grafo( matcircuito ):
     '''
     Riempi l'array con le variabili nel grafo
     '''
@@ -119,14 +209,14 @@ def crea_lista_variabili_grafo(matcircuito):
         # In teoria sono tutti uguali, ma se cambio dopo...
         j = 0
         while ( j < len( matcircuito[i] ) ):
-            #c = matcircuito[i][j]
-            #print(c,(i,j))
-            #print(len(matcircuito[i]))
-            #print(scan_variable_name(i,j,matcircuito))
-            #print(scan_variable_name(i,j,matcircuito)[0])
-            #print(scan_variable_name(i,j,matcircuito)[1])
+            # c = matcircuito[i][j]
+            # print(c,(i,j))
+            # print(len(matcircuito[i]))
+            # print(scan_variable_name(i,j,matcircuito))
+            # print(scan_variable_name(i,j,matcircuito)[0])
+            # print(scan_variable_name(i,j,matcircuito)[1])
             
-            nome_pos_variabile = scan_variable_name( i, j , matcircuito)
+            nome_pos_variabile = scan_variable_name( i, j , matcircuito )
             if ( nome_pos_variabile[1] != '' ):
                 variabili_nel_grafo.add( nome_pos_variabile )
                 # Se abbiamo trovato la variabile, salta alla fine della variabile corrente, data dalla 
@@ -202,11 +292,13 @@ def intorno_cella_vert( p_x, p_y ):
     return intorno_cella
 
 
-# Unifica la descrizione geoetrica di variabile in uun grafo con quella fisica (i vari parametri)
+
 class Componente:
     '''
     Classe che rappresenta un componente nel circuito, ad esempio una resistenza o un op-amp.
-    Contiene il nome, un dict con i parametri
+    
+    Contiene il nome, il tipo e un dict con i parametri.
+    Unifica la descrizione geoetrica di variabile in un grafo con quella fisica (i vari parametri)
     '''
     # Ad es "R1"
     nome = ''
@@ -221,31 +313,38 @@ class Componente:
     #     'p': (xp,yp, [ G.contatti_poli['a'] ]), 
     #     'o': (xo,yo, [ C1.contatti_poli['b'], V0.contatti_poli['a'] ])}
     contatti_poli = {}
-    def __init__( self, nome, coordinate, contatti_poli={} ):
+    def __init__( self, nome, coordinate ):
         # TODO: Leggere da circuito_conf.parametri_componenti i parametri dei componenti
         # TODO: controllare validità della lista (dict) dei parametri con quella dichiarata 
         # in componenti.lista_tipi_componenti per quel tipo
         self.nome = nome
         self.coordinate = coordinate
-        self.contatti_poli = contatti_poli
         
-        # Leggi e setta i parametri, togliendo quello con chiave 'type' già usato per il tipo
-        # Dovrebbe dare KeyError se nome non è nella lista
-        dict_param = circuito_conf.parametri_componenti[nome]
-        self.tipo = dict_param['type']
+        # TODO: Caso speciale se la variabile si chiama _CROSSX?Y?
+        if self.nome[0:6] == '_CROSS':
+            print( '[DEBUG]: Trovato cross' + str(coordinate) )
+            self.tipo = '_cross'
+            self.contatti_poli = {'p': ( coordinate[0], coordinate[1], [] )}
+        else:
+            # Leggi e setta i parametri, togliendo quello con chiave 'type' già usato per il tipo
+            # Dovrebbe dare KeyError se nome non è nella lista
+            dict_param = circuito_conf.parametri_componenti[nome]
+            self.tipo = dict_param['type']
+            
+            # http://stackoverflow.com/questions/15411107/delete-a-dictionary-item-if-the-key-exists
+            # Togli la chiave (e l'elemento associato a) 'type'
+            dict_param.pop( 'type', None )
+            self.parametri = dict_param
         
-        # http://stackoverflow.com/questions/15411107/delete-a-dictionary-item-if-the-key-exists
-        # Togli la chiave (e l'elemento associato a) 'type'
-        nomi_parametri = dict_param.pop('type',None)
-        self.parametri = nomi_parametri
-        
+            self.__trova_poli_componente__()
+            
     # Funzione che rende questa classe  hashabile (usabile come indice in un dict ad esempio)
     def __hash__( self ):
         # Qui repr ritorna una stringa rappresentante questo oggetto in modo "unico" (approfondire...)
         # e quindi generiamo un hash da questa stringa
         return hash( repr( self ) )
     
-    def trova_poli_componente( self , variabili_nel_grafo ):
+    def __trova_poli_componente__( self ):
         '''
         Metodo che riempe la lista 'contatti_poli' del componente e controlla che corrispondano al suo tipo
         come definito in componenti.py
@@ -266,7 +365,7 @@ class Componente:
             #OPAMP#
             #     #
             '''
-            # TODO: trovare modo pythonico di sommare un numero a ciascun elemento di una lista
+            # trovare modo pythonico di sommare un numero a ciascun elemento di una lista
             # TODO: Riscrivere con intorno_orizz ecc
             # a): Prima del nome
             for yp in ( pos_comp_y - 1, pos_comp_y + 0, pos_comp_y + 1 ):
@@ -274,9 +373,20 @@ class Componente:
                 #           a)              b)
                 for xp in ( pos_comp_x - 1, pos_comp_x + len( self.nome ) + 1 ):
                     # Se la cella in (xp,yp) contiene una lettera minuscola...
+                    print( "xp: " + str( xp ) + " yp: " + str( yp ) )
+                    print( "#ighe:" + str( len( matcircuito ) ) + " #colonne" + str( len( matcircuito[xp] ) ))
                     if matcircuito[xp][yp] in string.ascii_lowercase:
                         # Usa la lettera come etichetta del polo e associaci le coordinate
                         label_polo = matcircuito[xp][yp]
+                        
+                        # Controlla che sia una label di polo ammessa, come indicato in componenti.py
+                        '''if ( label_polo not in lista_tipi_componenti[self.tipo]['lista_poli'] ):
+                            raise ValueError( "[ERROR]: Pole label" + label_polo + " of variable " + self.nome + 
+                                            "of type " + self.tipo + "' not valid. Valid names are: \n" + 
+                                            str( lista_tipi_componenti[self.tipo]['lista_poli'] ) + 
+                                              "\nCheck file componenti.py" )
+                        '''    
+                        
                         # Dopo riempiremo la lista dei contatti...
                         self.contatti_poli[label_polo] = ( xp, yp, [] )
                 
@@ -294,9 +404,35 @@ class Componente:
                     if matcircuito[xp][yp] in string.ascii_lowercase:
                         # 
                         label_polo = matcircuito[xp][yp]
+
+                        # Utile, se tanto controllo sotto?
+                        '''# Controlla che sia una label di polo ammessa, come indicato in componenti.py
+                        if ( label_polo not in lista_tipi_componenti[self.tipo]['lista_poli'] ):
+                            raise ValueError( "[ERROR]: Pole label" + label_polo + " of variable " + self.nome + 
+                                            "of type " + self.tipo + "' not valid. Valid names are: \n" + 
+                                            str( lista_tipi_componenti[self.tipo]['lista_poli'] ) + 
+                                              "\nCheck file componenti.py" )
+                        '''    
+
+                        
                         # Dopo riempiremo la lista dei contatti...
                         self.contatti_poli[label_polo] = ( xp, yp, [] )
             
+        
+        # Controlla che ci siano i poli corretti
+        if ( 'lista_nomi_poli' in lista_tipi_componenti[self.tipo].keys() and 
+            len( lista_tipi_componenti[self.tipo]['lista_nomi_poli'] ) != 0 ):
+            
+            if ( set( self.contatti_poli.keys() ) != set( lista_tipi_componenti[self.tipo]['lista_poli'] ) ):
+                raise ValueError( "[ERROR]: Poles of variable " + self.nome + 
+                                  " not equal to those declared for type " + self.tipo + 
+                                  " in componenti.py" )
+            
+        elif ( lista_tipi_componenti[self.tipo]['numero_poli'] != len( self.contatti_poli ) ):
+            raise ValueError("[ERROR]: Number of poles of variable " + self.nome +
+                             "not equal to the number declared for type " + self.tipo +
+                             "in componenti.py")
+
 
 
 
@@ -394,30 +530,43 @@ class Componente:
                     
                     '''
                     
-                    # Controlliamo dove siamo arrivati. See è un polo...
-                    if ( matcircuito[x_finefilo][y_finefilo] in string.ascii_lowercase ):
-                        variabile_polo_arrivo = ( (-1, -1), '' )
+                    # Controlliamo dove siamo arrivati. Se è un polo...
+                    if matcircuito[x_finefilo][y_finefilo] in string.ascii_lowercase :
+                        variabile_polo_arrivo = ( ( -1, -1 ), '' )
                         
-                        # ... cercca la variabile (componente) a cui appartiene
+                        # ... cerca la variabile (componente) a cui appartiene
                         for ( x_ff_intorno, y_ff_intorno ) in intorno_cella_pieno( x_finefilo , y_finefilo ):
-                            if ( variabile_polo_arrivo != ( (-1, -1), '' ) ):
-                                variabile_polo_arrivo = scan_variable_name( x_ff_intorno, y_ff_intorno )
+                            # TODO: Condizione insensata!!!
+                            variabile_trovata = False
+                            variabile_polo_arrivo = scan_variable_name( x_ff_intorno, y_ff_intorno )
+                            
+                            # Controlla che il polo non sia attaccato a due variabili
+                            if (not variabile_trovata) and variabile_polo_arrivo != ( ( -1, -1 ), '' ):
                                 
                                 # TODO: aggiungere il nome del polo di arrivo in self.contatti_poli[2][nome_polo]
                                 # Ricordiamo che nome_polo è il polo di partenza, attacato a self
-                                self.contatti_poli[1][nome_polo].append( variabili_nel_grafo[variabile_polo_arrivo] )
+                                # TODO: Non vanno aggiunti da componenti_grafo?
+                                self.contatti_poli[2][nome_polo].append( componenti_grafo[variabile_polo_arrivo] )
                                 
-                            else:
+                                variabile_trovata = True
+                            elif variabile_trovata and variabile_polo_arrivo != ( ( -1, -1 ), '' ):
                                 raise ValueError( "Polo associato a più variabili! X" + 
                                                  str( x_ff_intorno ) + " Y" + str( y_ff_intorno ) )
                                 
-                                pass
+                                
+                                
+                    # TODO: Se è un incrocio ('+')...
+                    #elif matcircuito[x_finefilo][y_finefilo] == '+':
+                    #    nome_cross = '_CROSSX'+str(x_finefilo)+'Y'+str(y_finefilo)
+                        
+                        self.contatti_poli
+                        
                                 
                 
                 # Cerca e segui i fili
             
             
-            
+ 
             
             
             
@@ -436,26 +585,39 @@ class Componente:
 # TODO:Potremmo separarare l'inizializzazione (parseAsciiGraphFile, la creazione delle variabili globali) 
 # in un altro file..) in un altro
 
-variabili_nel_grafo = crea_lista_variabili_grafo(matcircuito)
+variabili_nel_grafo = crea_lista_variabili_grafo( matcircuito )
+
+# TODO: Stampa il circuito usato, per il debug
+with open("circ.log", 'w') as circlog:
+    for linea in matcircuito:
+        circlog.write(str(linea) + '\n')
 
 # TODO: fare una lista/dict componenti_grafo di Component con chiave il loro nome
-componenti_grafo = Set( {} )
+componenti_grafo = dict()
 for var in variabili_nel_grafo:
     posx = var[0][0]
     posy = var[0][1]
     nome = var[1]
 
-    componenti_grafo.add(Componente()
+    # Il costruttore chiama anche i poli componente
+    componenti_grafo[nome] = Componente( nome, ( posx, posy ) )
 
-print( variabili_nel_grafo  )
-print( componenti.lista_tipi_componenti )
-print( circuito_conf.parametri_componenti )
+# Cerca tutte le connesioni
+for comp in componenti_grafo:
+    comp.trova_connessioni()
+
+for comp in componenti_grafo:
+    print(repr( comp ) +"\n\n")
+
+#print( variabili_nel_grafo )
+#print( componenti.lista_tipi_componenti )
+#print( circuito_conf.parametri_componenti )
 
 # TODO: Per il debug
 for i in range( 0, len( matcircuito ) ):
     print( matcircuito[i] )
 
-
+    
 
 
 """ 
