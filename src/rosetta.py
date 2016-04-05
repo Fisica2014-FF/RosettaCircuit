@@ -44,14 +44,40 @@ circuito_conf = imp.load_source( nome_circuito , file_conf )
 # TODO: Classe 
 class Circuito:
     __formatted_lines__ = []
+    
+    '''
+    Sistema di rifermento
+    *--------> X
+    | 
+    |
+    |
+    |
+    v 
+    Y
+    Dunque adesso devo affettare la matrice per "lungo" e non per "largo", ie
+    a b c
+    d e f
+    g h i
+    da
+    ((a,b,c),(d,e,f),(g,h,i))
+    a
+    ((a,d,g),(b,e,h),(c,f,i))
+    cioè
+    a d g
+    b e h
+    c f i
+    (transposition)
+
+    Lo facciamo cl metodo at()
+    '''
     def at(self,x,y):
         return self.__formatted_lines__[y][x]
     
-    def num_righe(self):
-        return len(self.__formatted_lines__)
+    def xmax(self):
+        return len(self.__formatted_lines__[0])
     
-    def num_colonne(self):
-        len(self.__formatted_lines__)
+    def ymax(self):
+        return len(self.__formatted_lines__)
         
     def __init__(self, nome_circuito):
             # Leggi tutto il file in una stringa
@@ -75,35 +101,28 @@ class Circuito:
         # Esempio di list comprehension
         # Nota, aggiungo uno spazio bianco ovunque attorno al circuito, per evitare di diver scrivere troppe
         # condizioni sulle dimensioni degli array quando sono vicino ai bordi
-        formatted_lines = [' ' * ( lunghezza_massima + 2 )]
-        formatted_lines = formatted_lines + [' ' + riga.ljust( lunghezza_massima + 1 , ' ' ) for riga in raw_lines] + [' ' * ( lunghezza_massima + 2 )]
+        self.__formatted_lines__ = [' ' * ( lunghezza_massima + 2 )]
+        self.__formatted_lines__ = self.__formatted_lines__ + [' ' + riga.ljust( lunghezza_massima + 1 , ' ' ) for riga in raw_lines] + [' ' * ( lunghezza_massima + 2 )]
         
-        ''' 
-        TODO: Adesso devo affettare la matrice per "lungo" e non per "largo", ie
-        a b c
-        d e f
-        g h i
-        da
-        ((a,b,c),(d,e,f),(g,h,i))
-        a
-        ((a,d,g),(b,e,h),(c,f,i))
-        cioè
-        a d g
-        b e h
-        c f i
-        (transposition)
-        So we use the built-in zip on the matrix
-        
+        '''
+        Transposition        
         * is the splat operator
         list(...) because in python3 zip is an iterator and we want to reuse it
         '''
-        
         # formatted_lines = list(zip(*formatted_lines))
         # self.formatted_lines = formatted_lines
         
-
-        
-
+    def print(self, filelog=None):
+        if filelog == None:
+            for linea in self.__formatted_lines__:
+                print(linea)
+        else:
+            with open(filelog, 'w') as circlog:
+                for linea in self.__formatted_lines__:
+                    circlog.write(str(linea) + '\n')
+                    
+        return
+    
 
 def parseAsciiGraphFile( nome_circuito ):
     # Leggi tutto il file in una stringa
@@ -171,31 +190,31 @@ matcircuito = Circuito(sys.argv[1])
 
 # Ritorna la stinga vuota se alla posizione i,j di matcircuito non c'è una maiuscola (e quindi un nome
 # di variabile) altrimenti ritorna ((x,y),"NOME_VARIABILE") dove x,y è la coordinata della prima lettera
-def scan_variable_name( i, j , matcircuito ):
+def scan_variable_name( x, y , matcircuito ):
     d = collections.deque()
-    if matcircuito[i][j] == '+':
-        return ( ( i, j ), '_CROSS' + 'X' + str( i ) + 'Y' + str( j ) )
-    if matcircuito[i][j] not in string.ascii_uppercase:
+    if matcircuito.at(x,y) == '+':
+        return ( ( x, y ), '_CROSS' + 'X' + str( x ) + 'Y' + str( y ) )
+    if matcircuito.at(x,y) not in string.ascii_uppercase:
         return ( ( -1, -1 ), '' )
     else:
-        # O qua o col k dopo, si deve includere la lettera [i][j+0] in cui "atterriamo"
+        # O qua o col k dopo, si deve includere la lettera [x][y+0] in cui "atterriamo"
         k_prec = 0
-        while ( j + k_prec >= 0 and ( matcircuito[i][j + k_prec] in string.ascii_uppercase + string.digits ) ):
-            d.appendleft( matcircuito[i][j + k_prec] )
-            # print( ( i, j + k_prec ), '=', matcircuito[i][j + k_prec] )
+        while ( y + k_prec >= 0 and ( matcircuito.at(x,y + k_prec) in string.ascii_uppercase + string.digits ) ):
+            d.appendleft( matcircuito.at(x,y + k_prec) )
+            # print( ( x, y + k_prec ), '=', matcircuito[x][y + k_prec] )
             k_prec = k_prec - 1
         
 
         # Qui quindi dobbiamo partire da 1
         k = 1
-        while ( j + k < len( matcircuito[i] ) and ( matcircuito[i][j + k] in string.ascii_uppercase + string.digits ) ):
-            d.append( matcircuito[i][j + k] )
-            # print( ( i, j + k ), '=', matcircuito[i][j + k] )
+        while ( y + k < matcircuito.xmax() and ( matcircuito.at(x,y + k) in string.ascii_uppercase + string.digits ) ):
+            d.append( matcircuito.at(x,y + k) )
+            # print( ( x, y + k ), '=', matcircuito[x][y + k] )
             k = k + 1
         
         # k_prec+1 perché l'ultimo tentativo di ricerca all'indietro di maisucole è fallito
-        # print( 'variabile in ', ( i, j + k_prec + 1 ), '=', ''.join( d ) )
-        return ( ( i, j + k_prec + 1 ) , ''.join( d ) )
+        # print( 'variabile in ', ( x, y + k_prec + 1 ), '=', ''.join( d ) )
+        return ( ( x, y + k_prec + 1 ) , ''.join( d ) )
 
 
 
@@ -205,10 +224,10 @@ def crea_lista_variabili_grafo( matcircuito ):
     '''
     variabili_nel_grafo = set( {} )
     i = 0
-    while ( i < len( matcircuito ) ):
+    while ( i < matcircuito.xmax() ):
         # In teoria sono tutti uguali, ma se cambio dopo...
         j = 0
-        while ( j < len( matcircuito[i] ) ):
+        while ( j < matcircuito.ymax() ):
             # c = matcircuito[i][j]
             # print(c,(i,j))
             # print(len(matcircuito[i]))
@@ -587,10 +606,17 @@ class Componente:
 
 variabili_nel_grafo = crea_lista_variabili_grafo( matcircuito )
 
+pp.pprint( variabili_nel_grafo )
+
+for y in range(0,matcircuito.ymax()):
+    for x in range(0, matcircuito.xmax()):
+        print(matcircuito.at(x,y),end='')
+    print()
+
+
 # TODO: Stampa il circuito usato, per il debug
-with open("circ.log", 'w') as circlog:
-    for linea in matcircuito:
-        circlog.write(str(linea) + '\n')
+matcircuito.print("circlog")
+matcircuito.print()
 
 # TODO: fare una lista/dict componenti_grafo di Component con chiave il loro nome
 componenti_grafo = dict()
