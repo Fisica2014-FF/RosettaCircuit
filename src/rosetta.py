@@ -193,28 +193,29 @@ matcircuito = Circuito(sys.argv[1])
 def scan_variable_name( x, y , matcircuito ):
     d = collections.deque()
     if matcircuito.at(x,y) == '+':
-        return ( ( x, y ), '_CROSS' + 'X' + str( x ) + 'Y' + str( y ) )
+        return (  x, y , '_CROSS' + 'X' + str( x ) + 'Y' + str( y ) )
     if matcircuito.at(x,y) not in string.ascii_uppercase:
-        return ( ( -1, -1 ), '' )
+        return ( -1, -1, '')
     else:
         # O qua o col k dopo, si deve includere la lettera [x][y+0] in cui "atterriamo"
         k_prec = 0
-        while ( y + k_prec >= 0 and ( matcircuito.at(x,y + k_prec) in string.ascii_uppercase + string.digits ) ):
-            d.appendleft( matcircuito.at(x,y + k_prec) )
+        while ( x + k_prec >= 0 and ( matcircuito.at(x + k_prec,y) in string.ascii_uppercase + string.digits ) ):
+            d.appendleft( matcircuito.at(x + k_prec,y) )
             # print( ( x, y + k_prec ), '=', matcircuito[x][y + k_prec] )
             k_prec = k_prec - 1
         
 
         # Qui quindi dobbiamo partire da 1
         k = 1
-        while ( y + k < matcircuito.xmax() and ( matcircuito.at(x,y + k) in string.ascii_uppercase + string.digits ) ):
-            d.append( matcircuito.at(x,y + k) )
+        while ( x + k < matcircuito.xmax() and ( matcircuito.at(x + k,y) in string.ascii_uppercase + string.digits ) ):
+            d.append( matcircuito.at(x + k,y) )
             # print( ( x, y + k ), '=', matcircuito[x][y + k] )
             k = k + 1
         
         # k_prec+1 perché l'ultimo tentativo di ricerca all'indietro di maisucole è fallito
         # print( 'variabile in ', ( x, y + k_prec + 1 ), '=', ''.join( d ) )
-        return ( ( x, y + k_prec + 1 ) , ''.join( d ) )
+
+        return ( x + k_prec + 1, y , ''.join( d ) )
 
 
 
@@ -223,29 +224,30 @@ def crea_lista_variabili_grafo( matcircuito ):
     Riempi l'array con le variabili nel grafo
     '''
     variabili_nel_grafo = set( {} )
-    i = 0
-    while ( i < matcircuito.xmax() ):
+    y = 0
+    while ( y < matcircuito.ymax() ):
         # In teoria sono tutti uguali, ma se cambio dopo...
-        j = 0
-        while ( j < matcircuito.ymax() ):
-            # c = matcircuito[i][j]
-            # print(c,(i,j))
-            # print(len(matcircuito[i]))
-            # print(scan_variable_name(i,j,matcircuito))
-            # print(scan_variable_name(i,j,matcircuito)[0])
-            # print(scan_variable_name(i,j,matcircuito)[1])
+        x = 0
+        while ( x < matcircuito.xmax() ):
+            # c = matcircuito[y][x]
+            # print(c,(y,x))
+            # print(len(matcircuito[y]))
+            # print(scan_variable_name(y,x,matcircuito))
+            # print(scan_variable_name(y,x,matcircuito)[0])
+            # print(scan_variable_name(y,x,matcircuito)[1])
             
-            nome_pos_variabile = scan_variable_name( i, j , matcircuito )
-            if ( nome_pos_variabile[1] != '' ):
+            nome_pos_variabile = scan_variable_name( x, y , matcircuito )
+            if ( nome_pos_variabile[2] != '' ):
                 variabili_nel_grafo.add( nome_pos_variabile )
                 # Se abbiamo trovato la variabile, salta alla fine della variabile corrente, data dalla 
                 # posizione della prima lettera più la lunghezza della variabile (ricordiamo che 
-                # nome_pos_variabile ha la forma ((x,y),"NOME_VARIABILE") ) con x e coordinate della prima lettera 
-                j = nome_pos_variabile[0][1] + len( nome_pos_variabile[1] ) + 1
+                # nome_pos_variabile ha la forma ( x,y ,"NOME_VARIABILE") ) con y e coordinate della prima lettera 
+                x = nome_pos_variabile[0] + len( nome_pos_variabile[2] ) + 1
+                print(nome_pos_variabile[0],len( nome_pos_variabile[2]) )
                 continue
             # Altrimenti passa al prossimo carattere
-            j = j + 1
-        i = i + 1
+            x = x + 1
+        y = y + 1
         
     return variabili_nel_grafo
 
@@ -372,8 +374,8 @@ class Componente:
             
             
             
-            pos_comp_x = comp[0][0]
-            pos_comp_y = comp[0][1]
+            pos_comp_x = comp[0]
+            pos_comp_y = comp[1]
             '''
             Cerca prima e dopo il nome di variabile. Ricordiamo che 
             (pos_comp_x, pos_comp_y) è la posizione della prima lettera del nome della variabile,
@@ -392,11 +394,11 @@ class Componente:
                 #           a)              b)
                 for xp in ( pos_comp_x - 1, pos_comp_x + len( self.nome ) + 1 ):
                     # Se la cella in (xp,yp) contiene una lettera minuscola...
-                    print( "xp: " + str( xp ) + " yp: " + str( yp ) )
-                    print( "#ighe:" + str( len( matcircuito ) ) + " #colonne" + str( len( matcircuito[xp] ) ))
-                    if matcircuito[xp][yp] in string.ascii_lowercase:
+                    print( "xp: " + str( xp ) + " yp: " + str( yp ) + " " + self.nome)
+                    #print( "#ighe:" + str( len( matcircuito ) ) + " #colonne" + str( len( matcircuito[xp] ) ))
+                    if matcircuito.at(xp,yp) in string.ascii_lowercase:
                         # Usa la lettera come etichetta del polo e associaci le coordinate
-                        label_polo = matcircuito[xp][yp]
+                        label_polo = matcircuito.at(xp,yp)
                         
                         # Controlla che sia una label di polo ammessa, come indicato in componenti.py
                         '''if ( label_polo not in lista_tipi_componenti[self.tipo]['lista_poli'] ):
@@ -420,9 +422,9 @@ class Componente:
                 # C'è un "+1" in più perché range(a,b) "matematicamente", 
                 # con la notazione di intervallo dell'analisi, è [a,b)
                 for xp in range( pos_comp_x, pos_comp_x + len( self.nome ) + 2 ):
-                    if matcircuito[xp][yp] in string.ascii_lowercase:
+                    if matcircuito.at(xp,yp) in string.ascii_lowercase:
                         # 
-                        label_polo = matcircuito[xp][yp]
+                        label_polo = matcircuito.at(xp,yp)
 
                         # Utile, se tanto controllo sotto?
                         '''# Controlla che sia una label di polo ammessa, come indicato in componenti.py
@@ -442,15 +444,16 @@ class Componente:
         if ( 'lista_nomi_poli' in lista_tipi_componenti[self.tipo].keys() and 
             len( lista_tipi_componenti[self.tipo]['lista_nomi_poli'] ) != 0 ):
             
-            if ( set( self.contatti_poli.keys() ) != set( lista_tipi_componenti[self.tipo]['lista_poli'] ) ):
+            if ( set( self.contatti_poli.keys() ) != set( lista_tipi_componenti[self.tipo]['lista_nomi_poli'] ) ):
                 raise ValueError( "[ERROR]: Poles of variable " + self.nome + 
                                   " not equal to those declared for type " + self.tipo + 
                                   " in componenti.py" )
             
-        elif ( lista_tipi_componenti[self.tipo]['numero_poli'] != len( self.contatti_poli ) ):
+        elif ( lista_tipi_componenti[self.tipo]['numero_poli'] != len( self.contatti_poli ) and 
+               lista_tipi_componenti[self.tipo]['numero_poli'] != 1 ):
             raise ValueError("[ERROR]: Number of poles of variable " + self.nome +
-                             "not equal to the number declared for type " + self.tipo +
-                             "in componenti.py")
+                             " not equal to the number declared for type " + self.tipo +
+                             " in componenti.py")
 
 
 
@@ -551,7 +554,7 @@ class Componente:
                     
                     # Controlliamo dove siamo arrivati. Se è un polo...
                     if matcircuito[x_finefilo][y_finefilo] in string.ascii_lowercase :
-                        variabile_polo_arrivo = ( ( -1, -1 ), '' )
+                        variabile_polo_arrivo = ( -1, -1, '')
                         
                         # ... cerca la variabile (componente) a cui appartiene
                         for ( x_ff_intorno, y_ff_intorno ) in intorno_cella_pieno( x_finefilo , y_finefilo ):
@@ -560,7 +563,7 @@ class Componente:
                             variabile_polo_arrivo = scan_variable_name( x_ff_intorno, y_ff_intorno )
                             
                             # Controlla che il polo non sia attaccato a due variabili
-                            if (not variabile_trovata) and variabile_polo_arrivo != ( ( -1, -1 ), '' ):
+                            if (not variabile_trovata) and variabile_polo_arrivo != ( -1, -1, ''):
                                 
                                 # TODO: aggiungere il nome del polo di arrivo in self.contatti_poli[2][nome_polo]
                                 # Ricordiamo che nome_polo è il polo di partenza, attacato a self
@@ -568,7 +571,7 @@ class Componente:
                                 self.contatti_poli[2][nome_polo].append( componenti_grafo[variabile_polo_arrivo] )
                                 
                                 variabile_trovata = True
-                            elif variabile_trovata and variabile_polo_arrivo != ( ( -1, -1 ), '' ):
+                            elif variabile_trovata and variabile_polo_arrivo != ( -1, -1, ''):
                                 raise ValueError( "Polo associato a più variabili! X" + 
                                                  str( x_ff_intorno ) + " Y" + str( y_ff_intorno ) )
                                 
@@ -615,15 +618,15 @@ for y in range(0,matcircuito.ymax()):
 
 
 # TODO: Stampa il circuito usato, per il debug
-matcircuito.print("circlog")
+matcircuito.print("circ.log")
 matcircuito.print()
 
 # TODO: fare una lista/dict componenti_grafo di Component con chiave il loro nome
 componenti_grafo = dict()
 for var in variabili_nel_grafo:
-    posx = var[0][0]
-    posy = var[0][1]
-    nome = var[1]
+    posx = var[0]
+    posy = var[1]
+    nome = var[2]
 
     # Il costruttore chiama anche i poli componente
     componenti_grafo[nome] = Componente( nome, ( posx, posy ) )
