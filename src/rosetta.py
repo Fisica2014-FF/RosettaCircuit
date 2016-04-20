@@ -373,85 +373,94 @@ class Componente:
         Metodo che riempe la lista 'contatti_poli' del componente e controlla che corrispondano al suo tipo
         come definito in componenti.py
         '''
-        for comp in variabili_nel_grafo:
-            
-            print()
-            pp.pprint(variabili_nel_grafo )
-            
-            pos_comp_x = comp[0]
-            pos_comp_y = comp[1]
-            print( "posx: " + str( pos_comp_x ) + " posy: " + str( pos_comp_y ) + " nome: " + comp[2] )
-            print()
-            '''
-            Cerca prima e dopo il nome di variabile. Ricordiamo che 
-            (pos_comp_x, pos_comp_y) è la posizione della prima lettera del nome della variabile,
-            ad esempio qua è la 'O' di OPAMP
-            
-            a)    b)
-            #     #
-            #OPAMP#
-            #     #
-            '''
-            # trovare modo pythonico di sommare un numero a ciascun elemento di una lista
-            # TODO: Riscrivere con intorno_orizz ecc
-            # a): Prima del nome
-            #           a)              b)
-            for xp in ( pos_comp_x - 1, pos_comp_x + self.lunghezza_var + 1 ):
-                
-                for yp in ( pos_comp_y - 1, pos_comp_y + 0, pos_comp_y + 1 ):
-                
-                    # Se la cella in (xp,yp) contiene una lettera minuscola...
-                    print( "xp: " + str( xp ) + " yp: " + str( yp ) + " " + self.nome )
-                    # print( "#righe:" + str( len( matcircuito ) ) + " #colonne" + str( len( matcircuito[xp] ) ))
-                    
-                    if matcircuito.at( xp, yp ) in string.ascii_lowercase:
-                        # Usa la lettera come etichetta del polo e associaci le coordinate
-                        label_polo = matcircuito.at( xp, yp )
-                        
-                        # Controlla che sia una label di polo ammessa, come indicato in componenti.py
-                        '''if ( label_polo not in lista_tipi_componenti[self.tipo]['lista_poli'] ):
-                            raise ValueError( "[ERROR]: Pole label" + label_polo + " of variable " + self.nome + 
-                                            "of type " + self.tipo + "' not valid. Valid names are: \n" + 
-                                            str( lista_tipi_componenti[self.tipo]['lista_poli'] ) + 
-                                              "\nCheck file componenti.py" )
-                        '''    
-                        
-                        # Dopo riempiremo la lista dei contatti...
-                        self.contatti_poli[label_polo] = ( xp, yp, [] )
-                
-            '''
-            Cerca "sopra" e "sotto" la variabile
-             #####
-             OPAMP
-             #####
-            '''
-            for yp in ( pos_comp_y - 1, pos_comp_y + 1 ):
-
-                # C'è un "+1" in più perché range(a,b) "matematicamente", 
-                # con la notazione di intervallo dell'analisi, è [a,b)
-                for xp in range( pos_comp_x, self.lunghezza_var + 2 ):
-                    if matcircuito.at( xp, yp ) in string.ascii_lowercase:
-                        # 
-                        label_polo = matcircuito.at( xp, yp )
-
-                        # Utile, se tanto controllo sotto?
-                        '''# Controlla che sia una label di polo ammessa, come indicato in componenti.py
-                        if ( label_polo not in lista_tipi_componenti[self.tipo]['lista_poli'] ):
-                            raise ValueError( "[ERROR]: Pole label" + label_polo + " of variable " + self.nome + 
-                                            "of type " + self.tipo + "' not valid. Valid names are: \n" + 
-                                            str( lista_tipi_componenti[self.tipo]['lista_poli'] ) + 
-                                              "\nCheck file componenti.py" )
-                        '''    
-
-                        
-                        # Dopo riempiremo la lista dei contatti...
-                        self.contatti_poli[label_polo] = ( xp, yp, [] )
-            
+        #for comp in variabili_nel_grafo:
         
+        print()
+        pp.pprint(variabili_nel_grafo )
+        
+        pos_comp_x, pos_comp_y = self.coordinate
+        print( "posx: " + str( pos_comp_x ) + " posy: " + str( pos_comp_y ) + " nome: " + self.nome + str(self.lunghezza_var))
+        print()
+        print(set( self.contatti_poli.keys() ))
+        '''
+        Cerca prima e dopo il nome di variabile. Ricordiamo che 
+        (pos_comp_x, pos_comp_y) è la posizione della prima lettera del nome della variabile,
+        ad esempio qua è la 'O' di OPAMP
+        
+        a)    b)
+        #     #
+        #OPAMP#
+        #     #
+        '''
+        # trovare modo pythonico di sommare un numero a ciascun elemento di una lista
+        # TODO: Riscrivere con intorno_orizz ecc
+        # a): Prima del nome
+        #           a)              b)
+        for xp in ( pos_comp_x - 1, pos_comp_x + self.lunghezza_var ):
+            
+            for yp in ( pos_comp_y - 1, pos_comp_y + 0, pos_comp_y + 1 ):
+            
+                # Se la cella in (xp,yp) contiene una lettera minuscola...
+                print( "xp: " + str( xp ) + " yp: " + str( yp ) + " " + self.nome )
+                # print( "#righe:" + str( len( matcircuito ) ) + " #colonne" + str( len( matcircuito[xp] ) ))
+                
+                if matcircuito.at( xp, yp ) in string.ascii_lowercase:
+                    # Usa la lettera come etichetta del polo e associaci le coordinate
+                    label_polo = matcircuito.at( xp, yp )
+                    
+                    # Controlla che sia una label di polo ammessa, come indicato in componenti.py
+                    '''if ( label_polo not in lista_tipi_componenti[self.tipo]['lista_poli'] ):
+                        raise ValueError( "[ERROR]: Pole label" + label_polo + " of variable " + self.nome + 
+                                        "of type " + self.tipo + "' not valid. Valid names are: \n" + 
+                                        str( lista_tipi_componenti[self.tipo]['lista_poli'] ) + 
+                                          "\nCheck file componenti.py" )
+                    '''    
+                    
+                    # Dopo riempiremo la lista dei contatti...
+                    
+                    print("trovato polo %s" % label_polo )
+                    self.contatti_poli[label_polo] = ( xp, yp, [] )
+            
+        '''
+        Cerca "sopra" e "sotto" la variabile
+         #####
+         OPAMP
+         #####
+        '''
+        for yp in ( pos_comp_y - 1, pos_comp_y + 1 ):
+
+            # C'è un "+1" in più perché range(a,b) "matematicamente", 
+            # con la notazione di intervallo dell'analisi, è [a,b)
+            for xp in range( pos_comp_x, pos_comp_x + self.lunghezza_var + 2 ):
+                if matcircuito.at( xp, yp ) in string.ascii_lowercase:
+                    # 
+                    label_polo = matcircuito.at( xp, yp )
+                    
+                    print( "xp: " + str( xp ) + " yp: " + str( yp ) + " " + self.nome )
+                    
+                    # Utile, se tanto controllo sotto?
+                    '''# Controlla che sia una label di polo ammessa, come indicato in componenti.py
+                    if ( label_polo not in lista_tipi_componenti[self.tipo]['lista_poli'] ):
+                        raise ValueError( "[ERROR]: Pole label" + label_polo + " of variable " + self.nome + 
+                                        "of type " + self.tipo + "' not valid. Valid names are: \n" + 
+                                        str( lista_tipi_componenti[self.tipo]['lista_poli'] ) + 
+                                          "\nCheck file componenti.py" )
+                    '''    
+
+                    
+                    # Dopo riempiremo la lista dei contatti...
+                    print("trovato polo " + str(label_polo) + " " + str(xp) + " " + str(yp) )
+                    self.contatti_poli[label_polo] = ( xp, yp, [] )
+        
+    
         # Controlla che ci siano i poli corretti
         if ( 'lista_nomi_poli' in lista_tipi_componenti[self.tipo].keys() and 
             len( lista_tipi_componenti[self.tipo]['lista_nomi_poli'] ) != 0 ):
             
+            print("Lista poli")
+            pp.pprint( set( self.contatti_poli.keys() ) )
+            print("Lista poli teorica")
+            pp.pprint(set( lista_tipi_componenti[self.tipo]['lista_nomi_poli'] ))
             if ( set( self.contatti_poli.keys() ) != set( lista_tipi_componenti[self.tipo]['lista_nomi_poli'] ) ):
                 raise ValueError( "[ERROR]: Poles of variable " + self.nome + 
                                   " not equal to those declared for type " + self.tipo + 
@@ -460,8 +469,8 @@ class Componente:
         elif ( lista_tipi_componenti[self.tipo]['numero_poli'] != len( self.contatti_poli ) and 
                lista_tipi_componenti[self.tipo]['numero_poli'] != 1 ):
             raise ValueError( "[ERROR]: Number of poles of variable " + self.nome + 
-                             " not equal to the number declared for type " + self.tipo + 
-                             " in componenti.py" )
+                             " not equal to the number declared for type '" + self.tipo + 
+                             "' in componenti.py" )
 
 
 
@@ -640,8 +649,8 @@ for var in variabili_nel_grafo:
     componenti_grafo[nome] = Componente( nome, ( posx, posy ) )
 
 # Cerca tutte le connesioni
-for comp in componenti_grafo:
-    comp.trova_connessioni()
+for nome_comp in componenti_grafo.keys():
+    componenti_grafo[nome_comp].trova_connessioni()
 
 for comp in componenti_grafo:
     print( repr( comp ) + "\n\n" )

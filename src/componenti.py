@@ -11,7 +11,7 @@ lista_tipi_componenti = {
 'monopole': dict( lista_parametri=(), numero_poli=1, lista_nomi_poli=() ),
 'voltage_source': dict( lista_parametri=( 'V' ), numero_poli=2, lista_nomi_poli=( 'm', 'p' ) ),
 'resistor': dict( lista_parametri=( 'R' ), numero_poli=2 ),
-'capacitor': dict( lista_parametri=( 'C' ), numero_poli=2 ),
+'capacitor': dict( lista_parametri=( 'C' ), numero_poli=2, lista_nomi_poli=('m', 'p') ),
 'inductance': dict( lista_parametri=( 'L' ), numero_poli=2 ),
 'ground': dict(lista_parametri=(), numero_poli=1, lista_nomi_poli=()),
 'op_amp': dict( lista_parametri=(), numero_poli=3, lista_nomi_poli=( 'm', 'p', 'o' ) ),
