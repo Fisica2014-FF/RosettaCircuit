@@ -417,6 +417,21 @@ class Componente:
         print()
         print( set( self.contatti_poli.keys() ) )
         '''
+        Cerca contatti dipolari prima e dopo
+        #R1#
+        '''
+        
+        #TODO: Finire!
+        for xp in ( pos_comp_x - 1, pos_comp_x + self.lunghezza_var ):
+            yp = pos_comp_y
+            if matcircuito.at( xp, yp ) in "-^>":
+                label_polo = matcircuito.at( xp, yp )                    
+                print( "trovato polo %s" % label_polo )
+                self.contatti_poli[label_polo] = ( xp, yp, [] )
+
+        
+        
+        '''
         Cerca prima e dopo il nome di variabile. Ricordiamo che 
         (pos_comp_x, pos_comp_y) è la posizione della prima lettera del nome della variabile,
         ad esempio qua è la 'O' di OPAMP
@@ -448,7 +463,7 @@ class Componente:
                                         "of type " + self.tipo + "' not valid. Valid names are: \n" + 
                                         str( lista_tipi_componenti[self.tipo]['lista_poli'] ) + 
                                           "\nCheck file componenti.py" )
-                    '''    
+                    '''
                     
                     # Dopo riempiremo la lista dei contatti...
                     
@@ -465,7 +480,20 @@ class Componente:
 
             # C'è un "+1" in più perché range(a,b) "matematicamente", 
             # con la notazione di intervallo dell'analisi, è [a,b)
-            for xp in range( pos_comp_x, pos_comp_x + self.lunghezza_var + 2 ):
+            # TODO: O no? No perchè l'indice è tra una cella e l'altra
+            # a b
+            # #|#
+            #  ^
+            #  indice di b è quando il cursore è qua
+            # quindi se abbiamo ad es range(22,22 + 2 + 1)
+            # abbiamo
+            # |#|V|0|#     
+            #  22      
+            #    23    
+            #      24  
+            #        25
+            for xp in range( pos_comp_x, pos_comp_x + self.lunghezza_var + 1 ):
+                print("xp: %s, yp: %s, lv: %s" % (xp,yp,self.lunghezza_var) )
                 if matcircuito.at( xp, yp ) in string.ascii_lowercase:
                     # 
                     label_polo = matcircuito.at( xp, yp )
@@ -514,7 +542,8 @@ class Componente:
     # Da chiamare dopo che trova_poli_componente è stata chiamata su ogni componente
     def trova_connessioni( self ):
         '''
-        Trova a cosa è connesso ciascun polo di questo Component, seguendo i fili
+        Trova a cosa è connesso ciascun polo di questo Component, seguendo i fili.
+        TODO: Poi dobbiamo trattare il caso dei dipoli senza poli espliciti
         '''
         for nome_polo in self.contatti_poli.keys():
             px = self.contatti_poli[nome_polo][0]
@@ -644,6 +673,9 @@ class Componente:
                     elif matcircuito.at( x_finefilo, y_finefilo ) in string.ascii_uppercase + string.digits:
                         variabile_polo_arrivo = scan_variable_name( x_finefilo, y_finefilo, matcircuito )
                         
+                        '''
+                        No, preferisco mettere il polo nella lettera di arrivo e rihiedere che il nome di un dipolo
+                        sia almeno lungo due lettere
                         # Da che direzione provenivamo? Registra la posizione dell'ultimo pezzo di filo visto
                         if ( d == 'dx' ):
                             x_polo = x_finefilo - 1
@@ -664,7 +696,12 @@ class Componente:
                         
                         self.contatti_poli[nome_polo][2].append( {'comp': componenti_grafo[variabile_polo_arrivo[2]],
                                                                   'polo': 'p' + 'x' + str( x_polo ) + 'y' + str( y_polo )} )
-                        
+                        '''
+                        x_polo = x_finefilo
+                        y_polo = y_finefilo
+                        self.contatti_poli[nome_polo][2].append( {'comp': componenti_grafo[variabile_polo_arrivo[2]],
+                                          'polo': 'p' + 'x' + str( x_polo ) + 'y' + str( y_polo )} )
+
                 
                 # Cerca e segui i fili         
             
