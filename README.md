@@ -3,6 +3,8 @@
 This program read an "ASCII circuit", a text file representing an electrical circuit, and outputs a LaTeX file
 using [CircuiTikz](https://github.com/mredaelli/circuitikz). There are plans to also output SPICE configuration files.
 
+As for now, the code is quite messy andd needs to be refactored (which was to be expected since i made this project also to learn best Python practices).
+
 # Example:
 We want to go from this:
 ```
