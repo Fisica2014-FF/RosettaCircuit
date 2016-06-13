@@ -20,6 +20,13 @@ to this
 
 ![Inverting Op Amp](https://github.com/f-forcher/RosettaCircuit/blob/master/OpAmpImage.png)
 
+# Example usage
+From terminal
+'''
+cd project_folder
+python3 src/rosetta.py Test1
+'''
+
 # Status
 The parser of the ASCII graph is finished and it creates a complex adjacency list of classes Component, which in turn contains
 the list of other components connected to them. Now we have to write down this list in CircuiTikz or SPICE format.
