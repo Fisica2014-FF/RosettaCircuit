@@ -22,10 +22,10 @@ to this
 
 # Example usage
 From terminal
-'''
-cd project_folder
+```
+cd project_folder/
 python3 src/rosetta.py Test1
-'''
+```
 
 # Status
 The parser of the ASCII graph is finished and it creates a complex adjacency list of classes Component, which in turn contains
