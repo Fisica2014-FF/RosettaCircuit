@@ -28,7 +28,7 @@ python3 src/rosetta.py Test1
 ```
 
 # Status
-The parser of the ASCII graph is finished and it creates a complex adjacency list of classes Component, which in turn contains
+The parser of the ASCII graph is finished (apart from the occasional bug) and it creates an adjacency list of classes Component, which in turn contains
 the list of other components connected to them. Now we have to write down this list in CircuiTikz or SPICE format.
 
 As for now, the code is quite messy and needs to be refactored (which was to be expected since i made this project also to learn best Python practices).
